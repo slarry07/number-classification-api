@@ -1,71 +1,78 @@
-
-# app/main.py
-from fastapi import FastAPI, Query
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from .number_utils import (
-    is_prime, 
-    is_armstrong_number, 
-    get_digit_sum, 
-    get_fun_fact
-)
+from flask import Flask, request, jsonify
 import math
 
-app = FastAPI()
+app = Flask(__name__)
 
-# CORS Configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Enable CORS
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
-@app.get("/api/classify-number", response_class=JSONResponse)
-async def classify_number(number: str = Query(..., min_length=1)):
+# Helper functions
+def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+def is_perfect(n):
+    if n < 2:
+        return False
+    divisors = [i for i in range(1, n) if n % i == 0]
+    return sum(divisors) == n
+
+def is_armstrong(n):
+    if isinstance(n, float):
+        return False  # Armstrong numbers are only defined for integers
+    digits = [int(d) for d in str(abs(n))]
+    length = len(digits)
+    return sum(d ** length for d in digits) == abs(n)
+
+def digit_sum(n):
+    return sum(int(d) for d in str(abs(int(n))))
+
+def get_fun_fact(n):
+    if is_armstrong(n):
+        return f"{int(n)} is an Armstrong number because {' + '.join(f'{d}^{len(str(abs(int(n))))}' for d in str(abs(int(n))))} = {int(n)}"
+    return f"{n} is a fascinating number with unique properties."
+
+# API endpoint
+@app.route('/api/classify-number', methods=['GET'])
+def classify_number():
+    number = request.args.get('number')
+    
+    # Input validation
     try:
-        # Convert input to float first
-        n = float(number)
+        number = float(number)  # Accept both integers and floating-point numbers
+    except (ValueError, TypeError):
+        return jsonify({
+            "number": number if number else "null",
+            "error": True
+        }), 400
+    
+    # Determine properties
+    properties = []
+    if is_armstrong(number):
+        properties.append("armstrong")
+    if number % 2 == 0:
+        properties.append("even")
+    else:
+        properties.append("odd")
+    
+    # Build response
+    response = {
+        "number": number,
+        "is_prime": is_prime(int(number)) if number.is_integer() else False,
+        "is_perfect": is_perfect(int(number)) if number.is_integer() else False,
+        "properties": properties,
+        "digit_sum": digit_sum(number),
+        "fun_fact": get_fun_fact(number)
+    }
+    
+    return jsonify(response), 200
 
-        # Convert to integer if it is a whole number
-        if n.is_integer():
-            n = int(n)
-
-        # Determine properties
-        properties = []
-        if isinstance(n, int):  # Only integers should be classified as even/odd or Armstrong
-            properties.append("even" if n % 2 == 0 else "odd")
-
-            # Only non-negative integers can be Armstrong numbers
-            if n >= 0 and is_armstrong_number(n):
-                properties.append("armstrong")
-
-        # Construct response
-        return JSONResponse(
-            status_code=200,
-            content={
-                "number": n,
-                "is_prime": is_prime(n) if isinstance(n, int) and n > 1 else False,  # Only check for primes if n > 1
-                "is_perfect": False,  # Placeholder (you can add perfect number logic)
-                "properties": properties,
-                "digit_sum": get_digit_sum(abs(int(n))) if isinstance(n, int) else sum(int(d) for d in str(abs(n)) if d.isdigit()),
-                "fun_fact": get_fun_fact(abs(int(n))) if isinstance(n, int) else "No specific fun fact for non-integer numbers"
-            }
-        )
-
-    except ValueError:
-        # Handle invalid input (non-numeric values)
-        return JSONResponse(
-            status_code=400,
-            content={
-                "number": number,
-                "error": True,
-                "message": "Invalid number format"
-            }
-        )
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+if __name__ == '__main__':
+    app.run(debug=True)
