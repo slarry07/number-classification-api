@@ -43,15 +43,15 @@ def get_fun_fact(n):
 def classify_number():
     number = request.args.get('number')
     
-    # Input validation: allow integers and floating point numbers, including negative
-    if not number or not re.match(r"^[-+]?\d*\.?\d+$", number):
+    # Input validation: allow integers and floating-point numbers, including negative numbers
+    if not number or not re.match(r"^[-+]?\d+(\.\d+)?$", number):
         return jsonify({
             "number": number if number else "null",
             "error": True
         }), 400
     
     try:
-        number = float(number)
+        number = float(number)  # Convert to float to handle both integer and float cases
     except ValueError:
         return jsonify({
             "number": number,
