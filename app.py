@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import math
+import re  # Add the regex module for input validation
 
 app = Flask(__name__)
 
@@ -42,18 +43,24 @@ def get_fun_fact(n):
 def classify_number():
     number = request.args.get('number')
     
-    # Input validation
-    if not number or not number.lstrip('-').isdigit():
+    # Input validation: allow integers and floating point numbers, including negative
+    if not number or not re.match(r"^[-+]?\d*\.?\d+$", number):
         return jsonify({
             "number": number if number else "null",
             "error": True
         }), 400
     
-    number = int(number)
+    try:
+        number = float(number)
+    except ValueError:
+        return jsonify({
+            "number": number,
+            "error": "Invalid number format"
+        }), 400
     
     # Determine properties
     properties = []
-    if is_armstrong(number):
+    if is_armstrong(int(number)):  # Armstrong check requires an integer
         properties.append("armstrong")
     if number % 2 == 0:
         properties.append("even")
@@ -63,11 +70,11 @@ def classify_number():
     # Build response
     response = {
         "number": number,
-        "is_prime": is_prime(number),
-        "is_perfect": is_perfect(number),
+        "is_prime": is_prime(int(number)),
+        "is_perfect": is_perfect(int(number)),
         "properties": properties,
-        "digit_sum": digit_sum(number),
-        "fun_fact": get_fun_fact(number)
+        "digit_sum": digit_sum(int(number)),  # Digit sum requires an integer
+        "fun_fact": get_fun_fact(int(number))  # Fun fact requires an integer
     }
     
     return jsonify(response), 200
