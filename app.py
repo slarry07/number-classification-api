@@ -64,6 +64,10 @@ def classify_number():
     else:
         properties.append("odd")
     
+    # Ensure properties list only contains "armstrong", "odd", or "even"
+    allowed_properties = ["armstrong", "odd", "even"]
+    properties = [prop for prop in properties if prop in allowed_properties]
+    
     # Build response
     response = {
         "number": number,
