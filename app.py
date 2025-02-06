@@ -69,7 +69,7 @@ def classify_number():
         "number": number,
         "is_prime": is_prime(int(number)) if number.is_integer() else False,
         "is_perfect": is_perfect(int(number)) if number.is_integer() else False,
-        "properties": properties,
+        "properties": properties,  # Only armstrong, odd, or even
         "digit_sum": digit_sum(number),
         "fun_fact": get_fun_fact(number)
     }
