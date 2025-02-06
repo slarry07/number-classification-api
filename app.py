@@ -61,7 +61,7 @@ def classify_number():
         properties.append("armstrong")
     if number % 2 == 0:
         properties.append("even")
-    else:
+    elif number % 2 != 0:
         properties.append("odd")
     
     # Ensure properties list only contains "armstrong", "odd", or "even"
