@@ -1,68 +1,71 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import requests
+
+# app/main.py
+from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from .number_utils import (
+    is_prime, 
+    is_armstrong_number, 
+    get_digit_sum, 
+    get_fun_fact
+)
 import math
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS
+app = FastAPI()
 
-def is_prime(n):
-    """Check if a number is prime."""
-    if n < 2:
-        return False
-    for i in range(2, int(math.sqrt(n)) + 1):
-        if n % i == 0:
-            return False
-    return True
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def is_perfect(n):
-    """Check if a number is a perfect number."""
-    if n < 1:
-        return False
-    return sum([i for i in range(1, n) if n % i == 0]) == n
-
-def is_armstrong(n):
-    """Check if a number is an Armstrong number."""
-    digits = [int(d) for d in str(n)]
-    power = len(digits)
-    return sum(d**power for d in digits) == n
-
-def get_fun_fact(n):
-    """Fetch a fun fact from the Numbers API."""
-    url = f"http://numbersapi.com/{n}/math?json"
+@app.get("/api/classify-number", response_class=JSONResponse)
+async def classify_number(number: str = Query(..., min_length=1)):
     try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            return response.json().get("text", "No fun fact found.")
-    except:
-        return "Could not fetch fun fact."
-    return "No fun fact available."
+        # Convert input to float first
+        n = float(number)
 
-@app.route('/api/classify-number', methods=['GET'])
-def classify_number():
-    """Classify a number based on various properties."""
-    number = request.args.get("number")
+        # Convert to integer if it is a whole number
+        if n.is_integer():
+            n = int(n)
 
-    # Input validation
-    if not number or not number.lstrip("-").isdigit():
-        return jsonify({"number": number, "error": True}), 400
+        # Determine properties
+        properties = []
+        if isinstance(n, int):  # Only integers should be classified as even/odd or Armstrong
+            properties.append("even" if n % 2 == 0 else "odd")
 
-    number = int(number)
+            # Only non-negative integers can be Armstrong numbers
+            if n >= 0 and is_armstrong_number(n):
+                properties.append("armstrong")
 
-    # Determine properties
-    properties = ["even" if number % 2 == 0 else "odd"]
-    if is_armstrong(number):
-        properties.insert(0, "armstrong")
+        # Construct response
+        return JSONResponse(
+            status_code=200,
+            content={
+                "number": n,
+                "is_prime": is_prime(n) if isinstance(n, int) and n > 1 else False,  # Only check for primes if n > 1
+                "is_perfect": False,  # Placeholder (you can add perfect number logic)
+                "properties": properties,
+                "digit_sum": get_digit_sum(abs(int(n))) if isinstance(n, int) else sum(int(d) for d in str(abs(n)) if d.isdigit()),
+                "fun_fact": get_fun_fact(abs(int(n))) if isinstance(n, int) else "No specific fun fact for non-integer numbers"
+            }
+        )
 
-    response = {
-        "number": number,
-        "is_prime": is_prime(number),
-        "is_perfect": is_perfect(number),
-        "properties": properties,
-        "digit_sum": sum(int(digit) for digit in str(abs(number))),
-        "fun_fact": get_fun_fact(number)
-    }
+    except ValueError:
+        # Handle invalid input (non-numeric values)
+        return JSONResponse(
+            status_code=400,
+            content={
+                "number": number,
+                "error": True,
+                "message": "Invalid number format"
+            }
+        )
 
-    return jsonify(response), 200
+
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
