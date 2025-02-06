@@ -27,9 +27,9 @@ def is_perfect(n):
 def is_armstrong(n):
     if isinstance(n, float):
         return False  # Armstrong numbers are only defined for integers
-    digits = [int(d) for d in str(abs(n))]
+    digits = [int(d) for d in str(abs(int(n)))]
     length = len(digits)
-    return sum(d ** length for d in digits) == abs(n)
+    return sum(d ** length for d in digits) == abs(int(n))
 
 def digit_sum(n):
     return sum(int(d) for d in str(abs(int(n))))
@@ -46,8 +46,10 @@ def classify_number():
     
     # Input validation
     try:
-        number = float(number)  # Accept both integers and floating-point numbers
+        # Convert input to float (accepts integers and floating-point numbers)
+        number = float(number)
     except (ValueError, TypeError):
+        # Return 400 for invalid inputs (non-numeric strings)
         return jsonify({
             "number": number if number else "null",
             "error": True
