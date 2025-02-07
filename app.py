@@ -10,12 +10,29 @@ def after_request(response):
     return response
 
 # Helper functions
+def is_prime(n):
+    if n < 2 or not n.is_integer():  # Prime numbers are positive integers >= 2
+        return False
+    n = int(n)
+    for i in range(2, int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+def is_perfect(n):
+    if n < 2 or not n.is_integer():  # Perfect numbers are positive integers >= 2
+        return False
+    n = int(n)
+    divisors = [i for i in range(1, n) if n % i == 0]
+    return sum(divisors) == n
+
 def is_armstrong(n):
-    if isinstance(n, float):
-        return False  # Armstrong numbers are only defined for integers
-    digits = [int(d) for d in str(abs(int(n)))]
+    if not n.is_integer():  # Armstrong numbers are only for integers
+        return False
+    n = int(n)
+    digits = [int(d) for d in str(abs(n))]
     length = len(digits)
-    return sum(d ** length for d in digits) == abs(int(n))
+    return sum(d ** length for d in digits) == abs(n)
 
 def digit_sum(n):
     return sum(int(d) for d in str(abs(int(n))))
@@ -47,10 +64,16 @@ def classify_number():
         properties.append("even")
     else:
         properties.append("odd")
-    
+
+    # Ensure boolean output for is_prime and is_perfect
+    is_prime_value = is_prime(number)
+    is_perfect_value = is_perfect(number)
+
     # Build response
     response = {
         "number": number,
+        "is_prime": is_prime_value,   # Always boolean
+        "is_perfect": is_perfect_value,  # Always boolean
         "properties": properties,  # Only armstrong, odd, or even
         "digit_sum": digit_sum(number),
         "fun_fact": get_fun_fact(number)
