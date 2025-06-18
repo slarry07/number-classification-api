@@ -1,4 +1,4 @@
-# Number Classification API
+# Number Classification API2
 
 This API classifies a given number and returns its mathematical properties along with a fun fact.
 
