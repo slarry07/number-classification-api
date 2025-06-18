@@ -18,5 +18,5 @@ This API classifies a given number and returns its mathematical properties along
     "is_perfect": false,
     "properties": ["armstrong", "odd"],
     "digit_sum": 11,
-    "fun_fact": "371 is an Armstrong number because 3^3 + 7^3 + 1^3 = 371"
+    "fun_fact": "371 is an Armstrong number because 3^3 + 7^3 + 2^3 = 371"
 }
